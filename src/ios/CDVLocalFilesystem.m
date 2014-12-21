@@ -422,7 +422,7 @@
     return [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:(int)newPos];
 }
 
-- (CDVPluginResult *)writeToFileAtURL:(CDVFilesystemURL *)localURL withData:(NSData*)encData append:(BOOL)shouldAppend
+- (CDVPluginResult *)writeToFileAtURL:(CDVFilesystemURL *)localURL withData:(NSData*)encData start:(unsigned long long)pos
 {
     NSString *filePath = [self filesystemPathForURL:localURL];
 
@@ -430,27 +430,20 @@
     CDVFileError errCode = INVALID_MODIFICATION_ERR;
     int bytesWritten = 0;
 
-    if (filePath) {
-        NSOutputStream* fileStream = [NSOutputStream outputStreamToFileAtPath:filePath append:shouldAppend];
-        if (fileStream) {
-            NSUInteger len = [encData length];
-            if (len == 0) {
-                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:len];
-            } else {
-                [fileStream open];
-
-                bytesWritten = (int)[fileStream write:[encData bytes] maxLength:len];
-
-                [fileStream close];
-                if (bytesWritten > 0) {
-                    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:bytesWritten];
-                    // } else {
-                    // can probably get more detailed error info via [fileStream streamError]
-                    // errCode already set to INVALID_MODIFICATION_ERR;
-                    // bytesWritten = 0; // may be set to -1 on error
-                }
-            }
-        } // else fileStream not created return INVALID_MODIFICATION_ERR
+    NSFileHandle* file = [NSFileHandle fileHandleForWritingAtPath:filePath];
+    
+    if (file) {
+        @try{
+            [file seekToFileOffset:pos];
+            [file writeData:encData];
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:bytesWritten];
+            [file synchronizeFile];
+        }@catch (NSException *exception) {
+            errCode = INVALID_MODIFICATION_ERR;
+        }
+        @finally {
+            [file closeFile];
+        }
     } else {
         // invalid filePath
         errCode = NOT_FOUND_ERR;

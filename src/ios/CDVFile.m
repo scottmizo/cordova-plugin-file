@@ -969,14 +969,12 @@ NSString* const kCDVFilesystemURLPrefix = @"cdvfile";
 
         NSObject<CDVFileSystem> *fs = [self filesystemForURL:localURI];
 
-
-        [fs truncateFileAtURL:localURI atPosition:pos];
         CDVPluginResult *result;
         if ([argData isKindOfClass:[NSString class]]) {
             NSData *encData = [argData dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
-            result = [fs writeToFileAtURL:localURI withData:encData append:YES];
+            result = [fs writeToFileAtURL:localURI withData:encData start:pos];
         } else if ([argData isKindOfClass:[NSData class]]) {
-            result = [fs writeToFileAtURL:localURI withData:argData append:YES];
+            result = [fs writeToFileAtURL:localURI withData:argData start:pos];
         } else {
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Invalid parameter type"];
         }
