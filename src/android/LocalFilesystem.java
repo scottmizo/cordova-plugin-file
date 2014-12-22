@@ -554,10 +554,10 @@ public class LocalFilesystem extends Filesystem {
 			int offset, boolean isBinary) throws IOException, NoModificationAllowedException {
 
         boolean append = false;
-        if (offset > 0) {
-            this.truncateFileAtURL(inputURL, offset);
-            append = true;
-        }
+//        if (offset > 0) {
+//            this.truncateFileAtURL(inputURL, offset);
+//            append = true;
+//        }
 
         byte[] rawData;
         if (isBinary) {
@@ -572,7 +572,7 @@ public class LocalFilesystem extends Filesystem {
             FileOutputStream out = new FileOutputStream(this.filesystemPathForURL(inputURL), append);
             try {
             	in.read(buff, 0, buff.length);
-            	out.write(buff, 0, rawData.length);
+            	out.write(buff, offset, rawData.length);
             	out.flush();
             } finally {
             	// Always close the output
