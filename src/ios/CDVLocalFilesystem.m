@@ -436,7 +436,7 @@
         @try{
             [file seekToFileOffset:pos];
             [file writeData:encData];
-            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:bytesWritten];
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsInt:encData.length];
             [file synchronizeFile];
         }@catch (NSException *exception) {
             errCode = INVALID_MODIFICATION_ERR;
