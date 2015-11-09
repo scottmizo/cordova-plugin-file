@@ -24,7 +24,7 @@
 #import <sys/xattr.h>
 
 @implementation CDVLocalFilesystem
-@synthesize name=_name, fsRoot=_fsRoot;
+@synthesize name=_name, fsRoot=_fsRoot, urlTransformer;
 
 - (id) initWithName:(NSString *)name root:(NSString *)fsRoot
 {
@@ -78,7 +78,13 @@
     [dirEntry setObject:fullPath forKey:@"fullPath"];
     [dirEntry setObject:lastPart forKey:@"name"];
     [dirEntry setObject:self.name forKey: @"filesystemName"];
-    dirEntry[@"nativeURL"] = [[NSURL fileURLWithPath:[self filesystemPathForFullPath:fullPath]] absoluteString];
+    
+    NSURL* nativeURL = [NSURL fileURLWithPath:[self filesystemPathForFullPath:fullPath]];
+    if (self.urlTransformer) {
+        nativeURL = self.urlTransformer(nativeURL);
+    }
+    
+    dirEntry[@"nativeURL"] = [nativeURL absoluteString];
 
     return dirEntry;
 }
@@ -161,6 +167,16 @@
 
 }
 
+- (BOOL)valueForKeyIsNumber:(NSDictionary*)dict key:(NSString*)key
+{
+    BOOL bNumber = NO;
+    NSObject* value = dict[key];
+    if (value) {
+        bNumber = [value isKindOfClass:[NSNumber class]];
+    }
+    return bNumber;
+}
+
 - (CDVPluginResult *)getFileForURL:(CDVFilesystemURL *)baseURI requestedPath:(NSString *)requestedPath options:(NSDictionary *)options
 {
     CDVPluginResult* result = nil;
@@ -169,14 +185,13 @@
     BOOL exclusive = NO;
     int errorCode = 0;  // !!! risky - no error code currently defined for 0
 
-    if ([options valueForKeyIsNumber:@"create"]) {
+    if ([self valueForKeyIsNumber:options key:@"create"]) {
         create = [(NSNumber*)[options valueForKey:@"create"] boolValue];
     }
-    if ([options valueForKeyIsNumber:@"exclusive"]) {
+    if ([self valueForKeyIsNumber:options key:@"exclusive"]) {
         exclusive = [(NSNumber*)[options valueForKey:@"exclusive"] boolValue];
     }
-
-    if ([options valueForKeyIsNumber:@"getDir"]) {
+    if ([self valueForKeyIsNumber:options key:@"getDir"]) {
         // this will not exist for calls directly to getFile but will have been set by getDirectory before calling this method
         bDirRequest = [(NSNumber*)[options valueForKey:@"getDir"] boolValue];
     }
