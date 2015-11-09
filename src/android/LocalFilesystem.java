@@ -381,9 +381,13 @@ public class LocalFilesystem extends Filesystem {
         RandomAccessFile raf = new RandomAccessFile(filesystemPathForURL(inputURL), "rws");
         try
         {
+            String absolutePath = filesystemPathForURL(inputURL);
             raf.seek((long)offset);
             raf.write(rawData);
-            broadcastNewFile(inputURL);
+            
+            if (isPublicDirectory(absolutePath)) {
+                broadcastNewFile(Uri.fromFile(new File(absolutePath)));
+            }
         }
         catch (NullPointerException e)
         {
